@@ -5,9 +5,10 @@
 	  <LangVersion>8.0</LangVersion>
 	  <Authors>tanyongzheng</Authors>
 	  <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-	  <Description>用Redis的List，ZSet实现的按小时过期队列</Description>
+	  <Description>用Redis的List，ZSet实现的按小时/分钟过期队列</Description>
 	  <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
 	  <PackageProjectUrl>https://github.com/tanyongzheng/TZ.RedisQueue</PackageProjectUrl>
+	  <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

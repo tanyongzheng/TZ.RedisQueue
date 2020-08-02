@@ -20,8 +20,8 @@ namespace Demo
             //GetSortMessageTest();
             //await SendQueueTestAsync();
             //await GetMessageTestAsync();
-            //await SendSortQueueTestAsync();
-            await GetSortMessageTestAsync();
+            await SendSortQueueTestAsync();
+            //await GetSortMessageTestAsync();
             //InsertAndGetTest();
             Console.WriteLine("Hello World!");
             Console.ReadKey();
@@ -133,7 +133,7 @@ namespace Demo
             
             for (var i = 0; i < 100000; i++)
             {
-                await RedisQueueService.SendHoursSortQueueAsync(queueKeyPrefix, "A" + i);
+                await RedisQueueService.SendMinutesSortQueueAsync(queueKeyPrefix, "A" + i);
             }
         }
         private static async Task GetSortMessageTestAsync()
@@ -141,7 +141,7 @@ namespace Demo
             var queueKeyPrefix = "AsyncCallApi";
             for (var i = 0; i < 1000; i++)
             {
-                var list = await RedisQueueService.GetHoursSortMessageAsync(queueKeyPrefix, 1100);
+                var list = await RedisQueueService.GetMinutesSortMessageAsync(queueKeyPrefix, 1100);
                 if (list == null || list.Count == 0)
                 {
                     return;
