@@ -271,7 +271,7 @@ namespace TZ.RedisQueue
                     if (getBySingle)
                     {
 
-                        if (RedisServerVersion < new Version("5.0.0"))
+                        if (_redisServerVersion < new Version("5.0.0"))
                         {
                             var startIndex = 0;
                             var endIndex = 0;
@@ -307,7 +307,7 @@ namespace TZ.RedisQueue
                             return msgList;
                         }
 
-                        if (RedisServerVersion < new Version("5.0.0"))
+                        if (_redisServerVersion < new Version("5.0.0"))
                         {
                             using (await ZSetReadSyncSemaphore.LockAsync(token))
                             {
@@ -433,9 +433,9 @@ namespace TZ.RedisQueue
         private async Task<List<string>> GetkeysByPrefixAsync(string queueKeyPrefix)
         {
             List<string> keyList = new List<string>();
-            foreach (var server in serverList)
+            foreach (var server in _serverList)
             {
-                var keys = server.KeysAsync(_RedisQueueOptions.DefaultDatabase, $"{queueKeyPrefix}*");
+                var keys = server.KeysAsync(_redisQueueOptions.DefaultDatabase, $"{queueKeyPrefix}*");
                 await foreach (var item in keys)
                 {
                     keyList.Add(item);

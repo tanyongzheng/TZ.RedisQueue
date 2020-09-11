@@ -15,7 +15,10 @@ namespace TZ.RedisQueue.Configurations
         public string Password { get; set; }
 
         //public string RedisVersion { get; set; }
-        
+
+        public string HoursFormatKeySuffix { get; set; }
+
+        public string MinutesFormatKeySuffix { get; set; }
     }
 
 }

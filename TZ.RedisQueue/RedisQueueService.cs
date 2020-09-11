@@ -17,17 +17,17 @@ namespace TZ.RedisQueue
         private static readonly object ZSetWriteObj = new object();
         private static readonly object ZSetReadObj = new object();
 
-        private readonly RedisQueueOptions _RedisQueueOptions;
-        private readonly List<IServer> serverList;
+        private readonly RedisQueueOptions _redisQueueOptions;
+        private readonly List<IServer> _serverList;
 
-        private readonly static string listQueueKeyPrefix = "_List_";
-        private readonly static string zsetQueueKeyPrefix = "_ZSet_";
+        private static readonly string listQueueKeyPrefix = "_List_";
+        private static readonly string zsetQueueKeyPrefix = "_ZSet_";
 
-        private readonly static string hoursFormatKeySuffix = "yyyy-MM-dd_HH";
-        private readonly static string minutesFormatKeySuffix = "yyyy-MM-dd_HH:mm";
+        private readonly string _hoursFormatKeySuffix = "yyyy-MM-dd_HH";
+        private readonly string _minutesFormatKeySuffix = "yyyy-MM-dd_HH:mm";
 
         //private static int redisMainVersion;
-        private static Version RedisServerVersion;
+        private static Version _redisServerVersion;
 
         /// <summary>
         /// 程序中最好使用单例模式
@@ -38,44 +38,75 @@ namespace TZ.RedisQueue
         {
             if (options == null || options.Value == null)
             {
-                throw new Exception("please set RedisQueueOptions!");
+                throw new ArgumentException("please set RedisQueueOptions!");
             }
             else if (options.Value != null)
             {
-                _RedisQueueOptions = options.Value;
+                _redisQueueOptions = options.Value;
             }
-            if (_RedisQueueOptions == null)
+            if (_redisQueueOptions == null)
             {
-                throw new Exception("please set RedisQueueOptions!");
+                throw new ArgumentException("please set RedisQueueOptions!");
             }
-            if (_RedisQueueOptions.DefaultDatabase < 0)
+            if (_redisQueueOptions.DefaultDatabase < 0)
             {
-                throw new Exception("please set RedisQueueOptions->DefaultDatabase !");
+                throw new ArgumentException("please set RedisQueueOptions->DefaultDatabase !");
             }
-            if (string.IsNullOrEmpty(_RedisQueueOptions.Host))
+            if (string.IsNullOrEmpty(_redisQueueOptions.Host))
             {
-                throw new Exception("please set RedisQueueOptions-> Host!");
+                throw new ArgumentException("please set RedisQueueOptions-> Host!");
             }
-            if (_RedisQueueOptions.Port < 0)
+            if (_redisQueueOptions.Port < 0)
             {
-                throw new Exception("please set RedisQueueOptions-> Port!");
+                throw new ArgumentException("please set RedisQueueOptions-> Port!");
             }
-            /*
-            if (string.IsNullOrEmpty(_RedisQueueOptions.RedisVersion))
+
+            if (!string.IsNullOrEmpty(_redisQueueOptions.HoursFormatKeySuffix))
             {
-                throw new Exception("please set RedisQueueOptions-> RedisVersion!");
+                if (!_redisQueueOptions.HoursFormatKeySuffix.Contains("yyyy"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter year format is wrong, the format should be yyyy!");
+                }
+                if (!_redisQueueOptions.HoursFormatKeySuffix.Contains("MM"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter month format is wrong, the format should be MM!");
+                }
+                if (!_redisQueueOptions.HoursFormatKeySuffix.Contains("dd"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter day format is wrong, the format should be dd!");
+                }
+                if (!_redisQueueOptions.HoursFormatKeySuffix.Contains("HH"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter hour format is wrong, the format should be HH!");
+                }
+                _hoursFormatKeySuffix = _redisQueueOptions.HoursFormatKeySuffix;
             }
-            var mainVersionStr = _RedisQueueOptions.RedisVersion;
-            if (_RedisQueueOptions.RedisVersion.Contains("."))
+
+            if (!string.IsNullOrEmpty(_redisQueueOptions.MinutesFormatKeySuffix))
             {
-                mainVersionStr = _RedisQueueOptions.RedisVersion.Split('.')[0];
+                if (!_redisQueueOptions.MinutesFormatKeySuffix.Contains("yyyy"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter year format is wrong, the format should be yyyy!");
+                }
+                if (!_redisQueueOptions.MinutesFormatKeySuffix.Contains("MM"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter month format is wrong, the format should be MM!");
+                }
+                if (!_redisQueueOptions.MinutesFormatKeySuffix.Contains("dd"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter day format is wrong, the format should be dd!");
+                }
+                if (!_redisQueueOptions.MinutesFormatKeySuffix.Contains("HH"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter hour format is wrong, the format should be HH!");
+                }
+                if (!_redisQueueOptions.MinutesFormatKeySuffix.Contains("mm"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter minutes format is wrong, the format should be mm!");
+                }
+                _minutesFormatKeySuffix = _redisQueueOptions.MinutesFormatKeySuffix;
             }
-            if (!int.TryParse(mainVersionStr,out var mainVersion))
-            {
-                throw new Exception($"RedisQueueOptions-> RedisVersion, Version [{_RedisQueueOptions.RedisVersion}] format error");
-            }
-            redisMainVersion = mainVersion;
-            */
+
             if (redis == null)
             {
                 lock (lockObj)
@@ -84,9 +115,9 @@ namespace TZ.RedisQueue
                     {
                         //初始化redis
                         InitRedis();
-                        serverList = GetServers();
+                        _serverList = GetServers();
                         //redisMainVersion = serverList[0].Version.Major;
-                        RedisServerVersion= serverList[0].Version;
+                        _redisServerVersion= _serverList[0].Version;
                     }
                 }
             }
@@ -332,7 +363,7 @@ namespace TZ.RedisQueue
                     if (getBySingle)
                     {
 
-                        if (RedisServerVersion < new Version("5.0.0"))
+                        if (_redisServerVersion < new Version("5.0.0"))
                         {
                             var startIndex = 0;
                             var endIndex = 0;
@@ -368,7 +399,7 @@ namespace TZ.RedisQueue
                             return msgList;
                         }
 
-                        if (RedisServerVersion < new Version("5.0.0"))
+                        if (_redisServerVersion < new Version("5.0.0"))
                         {
                             lock (ZSetReadObj)
                             {
@@ -497,10 +528,10 @@ namespace TZ.RedisQueue
         {
             ConfigurationOptions configurationOptions = new ConfigurationOptions();
             configurationOptions.AbortOnConnectFail = false;//超时不重试
-            configurationOptions.EndPoints.Add(_RedisQueueOptions.Host, _RedisQueueOptions.Port);
-            if (!string.IsNullOrEmpty(_RedisQueueOptions.Password))
-                configurationOptions.Password = _RedisQueueOptions.Password;
-            configurationOptions.DefaultDatabase = _RedisQueueOptions.DefaultDatabase;
+            configurationOptions.EndPoints.Add(_redisQueueOptions.Host, _redisQueueOptions.Port);
+            if (!string.IsNullOrEmpty(_redisQueueOptions.Password))
+                configurationOptions.Password = _redisQueueOptions.Password;
+            configurationOptions.DefaultDatabase = _redisQueueOptions.DefaultDatabase;
             //ConnectionMultiplexer redis = ConnectionMultiplexer.Connect("server1:6379,server2:6379,abortConnect= false");
             redis = ConnectionMultiplexer.Connect(configurationOptions);
         }
@@ -521,9 +552,9 @@ namespace TZ.RedisQueue
         private List<string> GetkeysByPrefix(string queueKeyPrefix)
         {
             List<string> keyList = new List<string>();
-            foreach (var server in serverList)
+            foreach (var server in _serverList)
             {
-                var keys = server.Keys(_RedisQueueOptions.DefaultDatabase, $"{queueKeyPrefix}*");
+                var keys = server.Keys(_redisQueueOptions.DefaultDatabase, $"{queueKeyPrefix}*");
                 foreach (var item in keys)
                 {
                     keyList.Add(item);
@@ -554,16 +585,16 @@ namespace TZ.RedisQueue
 
         private RedisKey GetQueueKey(KeyExpiryTimeType keyExpiryTimeType,RedisDataType redisDataType, string queueKeyPrefix)
         {
-            var currentTime = DateTime.Now.ToString(hoursFormatKeySuffix);
+            var currentTime = DateTime.Now.ToString(_hoursFormatKeySuffix);
             var timesNodeStr = "Hours";
             if (keyExpiryTimeType == KeyExpiryTimeType.Hours)
             {
-                currentTime = DateTime.Now.ToString(hoursFormatKeySuffix);
+                currentTime = DateTime.Now.ToString(_hoursFormatKeySuffix);
                 timesNodeStr = "Hours";
             }
             else if (keyExpiryTimeType == KeyExpiryTimeType.Minutes)
             {
-                currentTime = DateTime.Now.ToString(minutesFormatKeySuffix);
+                currentTime = DateTime.Now.ToString(_minutesFormatKeySuffix);
                 timesNodeStr = "Minutes";
             }
 
@@ -580,7 +611,7 @@ namespace TZ.RedisQueue
             if (keyExpiryTimeType == KeyExpiryTimeType.Hours)
             {
                 timesNodeStr = "Hours";
-                timesFormatKeySuffix=hoursFormatKeySuffix.Replace("yyyy", "*").
+                timesFormatKeySuffix=_hoursFormatKeySuffix.Replace("yyyy", "*").
                 Replace("MM", "*").
                 Replace("dd", "*").
                 Replace("HH", "*")
@@ -589,7 +620,7 @@ namespace TZ.RedisQueue
             else if (keyExpiryTimeType == KeyExpiryTimeType.Minutes)
             {
                 timesNodeStr = "Minutes";
-                timesFormatKeySuffix = minutesFormatKeySuffix.Replace("yyyy", "*").
+                timesFormatKeySuffix = _minutesFormatKeySuffix.Replace("yyyy", "*").
                 Replace("MM", "*").
                 Replace("dd", "*").
                 Replace("HH", "*").Replace("mm", "*");
