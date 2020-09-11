@@ -1,12 +1,20 @@
 # TZ.RedisQueue
 
-Redis队列
+[![nuget](https://img.shields.io/nuget/v/TZ.RedisQueue.svg?style=flat-square)](https://www.nuget.org/packages/TZ.RedisQueue) 
+[![stats](https://img.shields.io/nuget/dt/TZ.RedisQueue.svg?style=flat-square)](https://www.nuget.org/stats/packages/TZ.RedisQueue?groupby=Version)
+[![License](https://img.shields.io/badge/license-Apache2.0-blue.svg)](https://github.com/tanyongzheng/TZ.RedisQueue/blob/master/LICENSE)
 
-#### 介绍
+## 介绍
 基于Redis的List，ZSet实现的有序/去重队列
 
 
-#### 使用说明
+主要功能：
+1. 设置过期时间
+2. 队列内排序
+3. 队列内去重
+
+
+## 使用说明
 
 1. Install-Package TZ.RedisQueue
 
