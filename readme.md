@@ -3,6 +3,7 @@
 [![nuget](https://img.shields.io/nuget/v/TZ.RedisQueue.svg?style=flat-square)](https://www.nuget.org/packages/TZ.RedisQueue) 
 [![stats](https://img.shields.io/nuget/dt/TZ.RedisQueue.svg?style=flat-square)](https://www.nuget.org/stats/packages/TZ.RedisQueue?groupby=Version)
 [![License](https://img.shields.io/badge/license-Apache2.0-blue.svg)](https://github.com/tanyongzheng/TZ.RedisQueue/blob/master/LICENSE)
+![.NETStandard](https://img.shields.io/badge/.NETStandard-%3E%3D2.0-green.svg)
 
 ## 介绍
 基于Redis的List，ZSet实现的有序/去重队列
