@@ -7,6 +7,7 @@ namespace TZ.RedisQueue
     public enum KeyExpiryTimeType
     {
         Hours = 0,
-        Minutes=1
+        Minutes=1,
+        Days=2
     }
 }

@@ -82,6 +82,8 @@ namespace TZ.RedisQueue
 
 #if NETCOREAPP3_0 || NETCOREAPP3_1
             var keyList =await GetkeysByPrefixAsync(queueKeyPattern);
+#elif NET5 || NET6 || NET7
+            var keyList =await GetkeysByPrefixAsync(queueKeyPattern);
 #else
             var keyList = GetkeysByPrefix(queueKeyPattern);
 #endif
@@ -140,7 +142,7 @@ namespace TZ.RedisQueue
         /// </summary>
         /// <param name="queueKeyPrefix">队列Key前缀</param>
         /// <param name="msg">发送的消息</param>
-        /// <param name="expiryHours">过期小时</param>
+        /// <param name="expiryHours">过期分钟</param>
         /// <returns>返回是否发送成功</returns>
         public async Task<bool> SendMinutesQueueAsync(string queueKeyPrefix, string msg, int expiryMinutes = 2, CancellationToken token = default)
         {
@@ -153,6 +155,27 @@ namespace TZ.RedisQueue
                 throw new ArgumentNullException($"param {nameof(expiryMinutes)} must be greater than 1 !");
             }
             return await SendQueueWithKeyExpiryAsync(queueKeyPrefix, msg, KeyExpiryTimeType.Hours, expiryMinutes, token);
+        }
+
+        /// <summary>
+        /// 发送消息到队列，使用List实现，有重复
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="msg">发送的消息</param>
+        /// <param name="expiryDays">过期天数</param>
+        /// <returns>返回是否发送成功</returns>
+        public async Task<bool> SendDaysQueueAsync(string queueKeyPrefix, string msg, int expiryDays = 2, CancellationToken token = default)
+        {
+            if (string.IsNullOrEmpty(msg))
+            {
+                throw new ArgumentNullException($"please set param {nameof(msg)}!");
+            }
+            if (expiryDays <= 1)
+            {
+                throw new ArgumentNullException($"param {nameof(expiryDays)} must be greater than 1 !");
+            }
+            return await SendQueueWithKeyExpiryAsync(queueKeyPrefix, msg, KeyExpiryTimeType.Days, expiryDays, token);
         }
 
         /// <summary>
@@ -179,6 +202,17 @@ namespace TZ.RedisQueue
             return await GetMessageByKeyExpiryAsync(queueKeyPrefix, count, KeyExpiryTimeType.Minutes);
         }
 
+        /// <summary>
+        /// 接收队列消息
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="count">获取消息数量</param>
+        /// <returns>返回消息列表</returns>
+        public async Task<List<string>> GetDaysMessageAsync(string queueKeyPrefix, int count = 1)
+        {
+            return await GetMessageByKeyExpiryAsync(queueKeyPrefix, count, KeyExpiryTimeType.Days);
+        }
         #endregion
 
 
@@ -251,6 +285,8 @@ namespace TZ.RedisQueue
             var queueKeyPattern = GetQueueKeyPattern(keyExpiryTimeType, RedisDataType.ZSet, queueKeyPrefix);
 
 #if NETCOREAPP3_0 || NETCOREAPP3_1
+            var keyList =await GetkeysByPrefixAsync(queueKeyPattern);
+#elif NET5 || NET6 || NET7
             var keyList =await GetkeysByPrefixAsync(queueKeyPattern);
 #else
             var keyList = GetkeysByPrefix(queueKeyPattern);
@@ -395,6 +431,28 @@ namespace TZ.RedisQueue
         }
 
         /// <summary>
+        /// 发送消息到排序队列，使用ZSET，同一Key内无重复
+        /// 排序按照时间戳升序
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="msg">发送的消息</param>
+        /// <param name="expiryDays">过期天数</param>
+        /// <returns>返回是否发送成功</returns>
+        public async Task<bool> SendDaysSortQueueAsync(string queueKeyPrefix, string msg, int expiryDays = 2, CancellationToken token = default)
+        {
+            if (string.IsNullOrEmpty(msg))
+            {
+                throw new ArgumentNullException($"please set param {nameof(msg)}!");
+            }
+            if (expiryDays <= 1)
+            {
+                throw new ArgumentNullException($"param {nameof(expiryDays)} must be greater than 1 !");
+            }
+            return await SendSortQueueWithKeyExpiryAsync(queueKeyPrefix, msg, KeyExpiryTimeType.Days, expiryDays, token);
+        }
+
+        /// <summary>
         /// 接收排序队列消息
         /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
         /// </summary>
@@ -424,6 +482,23 @@ namespace TZ.RedisQueue
                 throw new ArgumentNullException($"param {nameof(count)} must be greater than 0 !");
             }
             return await GetSortMessageByKeyExpiryAsync(queueKeyPrefix, count, KeyExpiryTimeType.Minutes, token);
+        }
+
+
+        /// <summary>
+        /// 接收排序队列消息
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="count">获取消息数量</param>
+        /// <returns>返回消息列表</returns>
+        public async Task<List<string>> GetDaysSortMessageAsync(string queueKeyPrefix, int count = 1, CancellationToken token = default)
+        {
+            if (count <= 0)
+            {
+                throw new ArgumentNullException($"param {nameof(count)} must be greater than 0 !");
+            }
+            return await GetSortMessageByKeyExpiryAsync(queueKeyPrefix, count, KeyExpiryTimeType.Days, token);
         }
         #endregion
 

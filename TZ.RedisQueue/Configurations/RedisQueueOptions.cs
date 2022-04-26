@@ -19,6 +19,8 @@ namespace TZ.RedisQueue.Configurations
         public string HoursFormatKeySuffix { get; set; }
 
         public string MinutesFormatKeySuffix { get; set; }
+
+        public string DaysFormatKeySuffix { get; set; }
     }
 
 }

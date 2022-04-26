@@ -25,6 +25,7 @@ namespace TZ.RedisQueue
 
         private readonly string _hoursFormatKeySuffix = "yyyy-MM-dd_HH";
         private readonly string _minutesFormatKeySuffix = "yyyy-MM-dd_HH:mm";
+        private readonly string _daysFormatKeySuffix = "yyyy-MM-dd";
 
         //private static int redisMainVersion;
         private static Version _redisServerVersion;
@@ -105,6 +106,23 @@ namespace TZ.RedisQueue
                     throw new ArgumentException("the params RedisQueueOptions-> HoursFormatKeySuffix error,The parameter minutes format is wrong, the format should be mm!");
                 }
                 _minutesFormatKeySuffix = _redisQueueOptions.MinutesFormatKeySuffix;
+            }
+            
+            if (!string.IsNullOrEmpty(_redisQueueOptions.DaysFormatKeySuffix))
+            {
+                if (!_redisQueueOptions.DaysFormatKeySuffix.Contains("yyyy"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> DaysFormatKeySuffix error,The parameter year format is wrong, the format should be yyyy!");
+                }
+                if (!_redisQueueOptions.DaysFormatKeySuffix.Contains("MM"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> DaysFormatKeySuffix error,The parameter month format is wrong, the format should be MM!");
+                }
+                if (!_redisQueueOptions.DaysFormatKeySuffix.Contains("dd"))
+                {
+                    throw new ArgumentException("the params RedisQueueOptions-> DaysFormatKeySuffix error,The parameter day format is wrong, the format should be dd!");
+                }
+                _hoursFormatKeySuffix = _redisQueueOptions.DaysFormatKeySuffix;
             }
 
             if (redis == null)
@@ -254,6 +272,28 @@ namespace TZ.RedisQueue
             return SendQueueWithKeyExpiry(queueKeyPrefix, msg, KeyExpiryTimeType.Minutes, expiryMinutes);
         }
 
+
+        /// <summary>
+        /// 发送消息到队列，使用List实现，有重复
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="msg">发送的消息</param>
+        /// <param name="expiryDays">过期天数</param>
+        /// <returns>返回是否发送成功</returns>
+        public bool SendDaysQueue(string queueKeyPrefix, string msg, int expiryDays = 2)
+        {
+            if (string.IsNullOrEmpty(msg))
+            {
+                throw new ArgumentNullException($"please set param {nameof(msg)}!");
+            }
+            if (expiryDays <= 1)
+            {
+                throw new ArgumentNullException($"param {nameof(expiryDays)} must be greater than 1 !");
+            }
+            return SendQueueWithKeyExpiry(queueKeyPrefix, msg, KeyExpiryTimeType.Days, expiryDays);
+        }
+
         /// <summary>
         /// 接收队列消息
         /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
@@ -278,6 +318,20 @@ namespace TZ.RedisQueue
         {
             return GetMessageByKeyExpiry(queueKeyPrefix, count,KeyExpiryTimeType.Minutes);
         }
+
+        
+        /// <summary>
+        /// 接收队列消息
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="count">获取消息数量</param>
+        /// <returns>返回消息列表</returns>
+        public List<string> GetDaysMessage(string queueKeyPrefix, int count = 1)
+        {
+            return GetMessageByKeyExpiry(queueKeyPrefix, count, KeyExpiryTimeType.Days);
+        }
+
         #endregion
 
 
@@ -486,6 +540,29 @@ namespace TZ.RedisQueue
             return SendSortQueueWithKeyExpiry(queueKeyPrefix, msg, KeyExpiryTimeType.Minutes, expiryMinutes);
         }
 
+
+        /// <summary>
+        /// 发送消息到排序队列，使用ZSET，同一Key内无重复
+        /// 排序按照时间戳升序
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="msg">发送的消息</param>
+        /// <param name="expiryDays">过期天数</param>
+        /// <returns>返回是否发送成功</returns>
+        public bool SendDaysSortQueue(string queueKeyPrefix, string msg, int expiryDays = 2)
+        {
+            if (string.IsNullOrEmpty(msg))
+            {
+                throw new ArgumentNullException($"please set param {nameof(msg)}!");
+            }
+            if (expiryDays <= 1)
+            {
+                throw new ArgumentNullException($"param {nameof(expiryDays)} must be greater than 1 !");
+            }
+            return SendSortQueueWithKeyExpiry(queueKeyPrefix, msg, KeyExpiryTimeType.Days, expiryDays);
+        }
+
         /// <summary>
         /// 接收排序队列消息
         /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
@@ -495,10 +572,6 @@ namespace TZ.RedisQueue
         /// <returns>返回消息列表</returns>
         public List<string> GetHoursSortMessage(string queueKeyPrefix, int count = 1)
         {
-            if (count <= 0)
-            {
-                throw new ArgumentNullException($"param {nameof(count)} must be greater than 0 !");
-            }
             return GetSortMessageByKeyExpiry(queueKeyPrefix, count, KeyExpiryTimeType.Hours);
         }
 
@@ -511,13 +584,21 @@ namespace TZ.RedisQueue
         /// <returns>返回消息列表</returns>
         public List<string> GetMinutesSortMessage(string queueKeyPrefix, int count = 1)
         {
-            if (count <= 0)
-            {
-                throw new ArgumentNullException($"param {nameof(count)} must be greater than 0 !");
-            }
             return GetSortMessageByKeyExpiry(queueKeyPrefix, count, KeyExpiryTimeType.Minutes);
         }
 
+
+        /// <summary>
+        /// 接收排序队列消息
+        /// （过期时间为整个Key内的所有消息过期，从第一个消息的Key开始）
+        /// </summary>
+        /// <param name="queueKeyPrefix">队列Key前缀</param>
+        /// <param name="count">获取消息数量</param>
+        /// <returns>返回消息列表</returns>
+        public List<string> GetDaysSortMessage(string queueKeyPrefix, int count = 1)
+        {
+            return GetSortMessageByKeyExpiry(queueKeyPrefix, count, KeyExpiryTimeType.Days);
+        }
         #endregion
 
         #region private method
@@ -580,6 +661,10 @@ namespace TZ.RedisQueue
             {
                 expiry = TimeSpan.FromMinutes(expiryTimes);
             }
+            else if (keyExpiryTimeType == KeyExpiryTimeType.Days)
+            {
+                expiry = TimeSpan.FromDays(expiryTimes);
+            }
             return expiry;
         }
 
@@ -596,6 +681,11 @@ namespace TZ.RedisQueue
             {
                 currentTime = DateTime.Now.ToString(_minutesFormatKeySuffix);
                 timesNodeStr = "Minutes";
+            }
+            else if (keyExpiryTimeType == KeyExpiryTimeType.Days)
+            {
+                currentTime = DateTime.Now.ToString(_daysFormatKeySuffix);
+                timesNodeStr = "Days";
             }
 
             RedisKey queueKey = queueKeyPrefix + (redisDataType==RedisDataType.List? listQueueKeyPrefix:zsetQueueKeyPrefix) + timesNodeStr+":" + currentTime;
@@ -624,6 +714,14 @@ namespace TZ.RedisQueue
                 Replace("MM", "*").
                 Replace("dd", "*").
                 Replace("HH", "*").Replace("mm", "*");
+            }
+            else if (keyExpiryTimeType == KeyExpiryTimeType.Days)
+            {
+                timesNodeStr = "Days";
+                timesFormatKeySuffix= _daysFormatKeySuffix.Replace("yyyy", "*").
+                Replace("MM", "*").
+                Replace("dd", "*")
+                ;
             }
             queueKeyPattern += timesNodeStr + ":"+timesFormatKeySuffix;
             

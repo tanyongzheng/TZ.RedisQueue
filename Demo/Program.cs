@@ -20,8 +20,12 @@ namespace Demo
             //GetSortMessageTest();
             //await SendQueueTestAsync();
             //await GetMessageTestAsync();
-            await SendSortQueueTestAsync();
+            //await SendSortQueueTestAsync();
             //await GetSortMessageTestAsync();
+            //await SendDaysSortQueueTestAsync();
+            //await GetDaysSortMessageTestAsync();
+            await SendDaysQueueTestAsync();
+            //await GetDaysMessageTestAsync();
             //InsertAndGetTest();
             Console.WriteLine("Hello World!");
             Console.ReadKey();
@@ -55,6 +59,18 @@ namespace Demo
         #endregion
 
         #region List 异步
+        private static async Task SendDaysQueueTestAsync()
+        {
+            var queueKeyPrefix = "AsyncCallApi";
+            for (var i = 0; i < 50000; i++)
+            {
+                var result= await RedisQueueService.SendDaysQueueAsync(queueKeyPrefix, "A" + i);
+                if (!result)
+                {
+                    Console.WriteLine("A" + i+"入队失败");
+                }
+            }
+        }
         private static async Task SendQueueTestAsync()
         {
             var queueKeyPrefix = "AsyncCallApi";
@@ -67,6 +83,22 @@ namespace Demo
                 }
             }
         }
+        private static async Task GetDaysMessageTestAsync()
+        {
+            var queueKeyPrefix = "AsyncCallApi";
+            for (var i = 0; i < 50; i++)
+            {
+                var list = await RedisQueueService.GetDaysMessageAsync(queueKeyPrefix, 1100);
+                if (list == null || list.Count == 0)
+                {
+                    return;
+                }
+                foreach (var item in list)
+                {
+                    Console.Write(item);
+                }
+            }
+        } 
         private static async Task GetMessageTestAsync()
         {
             var queueKeyPrefix = "AsyncCallApi";
@@ -118,6 +150,25 @@ namespace Demo
         #endregion
 
         #region ZSet 异步
+        private static async Task SendDaysSortQueueTestAsync()
+        {
+            var queueKeyPrefix = "AsyncCallApi";
+            /*
+            for (var i = 0; i < 100; i++)
+            {
+                await RedisQueueService.SendHoursSortQueueAsync(queueKeyPrefix, "A" + i);
+            }
+            for (var i = 99; i >=0; i--)
+            {
+                await RedisQueueService.SendHoursSortQueueAsync(queueKeyPrefix, "A" + i);
+            }*/
+            
+            for (var i = 0; i < 100000; i++)
+            {
+                await RedisQueueService.SendDaysSortQueueAsync(queueKeyPrefix, "A" + i);
+            }
+        }
+        
         private static async Task SendSortQueueTestAsync()
         {
             var queueKeyPrefix = "AsyncCallApi";
@@ -136,6 +187,23 @@ namespace Demo
                 await RedisQueueService.SendMinutesSortQueueAsync(queueKeyPrefix, "A" + i);
             }
         }
+        private static async Task GetDaysSortMessageTestAsync()
+        {
+            var queueKeyPrefix = "AsyncCallApi";
+            for (var i = 0; i < 1000; i++)
+            {
+                var list = await RedisQueueService.GetDaysSortMessageAsync(queueKeyPrefix, 2000);
+                if (list == null || list.Count == 0)
+                {
+                    return;
+                }
+                foreach (var item in list)
+                {
+                    Console.Write(item);
+                }
+            }
+        } 
+        
         private static async Task GetSortMessageTestAsync()
         {
             var queueKeyPrefix = "AsyncCallApi";
